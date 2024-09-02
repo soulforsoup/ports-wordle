@@ -1,0 +1,201 @@
+<div id="wordle-game">
+    <h2>Port Wordle</h2>
+    <div id="game-board"></div>
+    <div id="keyboard"></div>
+    <div id="controls">
+        <button id="delete-btn">Delete</button>
+        <button id="enter-btn">Enter</button>
+        <button id="restart-btn">Restart Game</button>
+    </div>
+</div>
+
+<style>
+    #wordle-game {
+        font-family: Arial, sans-serif;
+        max-width: 500px;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    #game-board {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+        margin-bottom: 20px;
+    }
+
+    .tile {
+        width: 100%;
+        aspect-ratio: 1;
+        border: 2px solid #ccc;
+        font-size: 2em;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+    }
+
+    #keyboard {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 5px;
+        margin-bottom: 20px;
+    }
+
+    .key {
+        padding: 10px;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.1s ease;
+    }
+
+    .key:active {
+        transform: scale(0.95);
+        background-color: #e0e0e0;
+    }
+
+    #controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    #controls button {
+        padding: 10px 20px;
+        font-size: 1em;
+        cursor: pointer;
+    }
+
+    @media (max-width: 500px) {
+        .tile {
+            font-size: 1.5em;
+        }
+
+        #keyboard {
+            grid-template-columns: repeat(7, 1fr);
+        }
+    }
+</style>
+
+<script>
+    const words = [
+        "PORTS",
+        "TRADE",
+        "SHIPS",
+        "GLOBAL",
+        "GOODS",
+        "LINKS",
+        "SUPPLY",
+        "CHAIN",
+        "WORLD",
+    ];
+    let currentWord = "";
+    let guessedLetters = [];
+    let remainingGuesses = 6;
+
+    function initGame() {
+        currentWord = words[Math.floor(Math.random() * words.length)];
+        guessedLetters = [];
+        remainingGuesses = 6;
+
+        const gameBoard = document.getElementById("game-board");
+        gameBoard.innerHTML = "";
+
+        for (let i = 0; i < 30; i++) {
+            const tile = document.createElement("div");
+            tile.classList.add("tile");
+            gameBoard.appendChild(tile);
+        }
+
+        const keyboard = document.getElementById("keyboard");
+        keyboard.innerHTML = "";
+
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach((letter) => {
+            const key = document.createElement("div");
+            key.classList.add("key");
+            key.textContent = letter;
+            key.addEventListener("click", () => handleGuess(letter));
+            keyboard.appendChild(key);
+        });
+    }
+
+    function handleGuess(letter) {
+        if (
+            remainingGuesses > 0 &&
+            guessedLetters.length < currentWord.length
+        ) {
+            guessedLetters.push(letter);
+            updateBoard();
+        }
+    }
+
+    function updateBoard() {
+        const tiles = document.querySelectorAll(".tile");
+        const startIndex = (6 - remainingGuesses) * 5;
+
+        for (let i = 0; i < 5; i++) {
+            tiles[startIndex + i].textContent =
+                i < guessedLetters.length ? guessedLetters[i] : "";
+            tiles[startIndex + i].style.backgroundColor =
+                i < guessedLetters.length ? "#e0e0e0" : "";
+        }
+    }
+
+    function checkGuess() {
+        if (guessedLetters.length !== 5) return;
+
+        const guess = guessedLetters.join("");
+        const tiles = document.querySelectorAll(".tile");
+        const startIndex = (6 - remainingGuesses) * 5;
+
+        for (let i = 0; i < currentWord.length; i++) {
+            if (guess[i] === currentWord[i]) {
+                tiles[startIndex + i].style.backgroundColor = "green";
+            } else if (currentWord.includes(guess[i])) {
+                tiles[startIndex + i].style.backgroundColor = "yellow";
+            } else {
+                tiles[startIndex + i].style.backgroundColor = "gray";
+            }
+            tiles[startIndex + i].style.color = "white";
+        }
+
+        if (guess === currentWord) {
+            alert("Congratulations! You guessed the word!");
+        } else {
+            remainingGuesses--;
+            guessedLetters = [];
+
+            if (remainingGuesses === 0) {
+                alert(`Game over! The word was ${currentWord}`);
+            }
+        }
+    }
+
+    function deleteLetter() {
+        if (guessedLetters.length > 0) {
+            guessedLetters.pop();
+            updateBoard();
+        }
+    }
+
+    document.getElementById("restart-btn").addEventListener("click", initGame);
+    document
+        .getElementById("delete-btn")
+        .addEventListener("click", deleteLetter);
+    document.getElementById("enter-btn").addEventListener("click", checkGuess);
+
+    document.addEventListener("DOMContentLoaded", initGame);
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key >= "a" && e.key <= "z") {
+            handleGuess(e.key.toUpperCase());
+        } else if (e.key === "Backspace") {
+            deleteLetter();
+        } else if (e.key === "Enter") {
+            checkGuess();
+        }
+    });
+</script>
