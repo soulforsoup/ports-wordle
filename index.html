@@ -1,203 +1,393 @@
-<div id="wordle-game">
-    <h2>Port Wordle</h2>
-    <div id="game-board"></div>
-    <div id="keyboard"></div>
-</div>
-
-<style>
-    #wordle-game {
-        font-family: Arial, sans-serif;
-        max-width: 500px;
-        margin: 0 auto;
-        text-align: center;
-    }
-
-    #game-board {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 5px;
-        margin-bottom: 20px;
-    }
-
-    .tile {
-        width: 100%;
-        aspect-ratio: 1;
-        border: 2px solid #ccc;
-        font-size: 2em;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-transform: uppercase;
-        transition: all 0.3s ease;
-    }
-
-    #keyboard {
-        display: grid;
-        grid-template-columns: repeat(10, 1fr);
-        gap: 5px;
-    }
-
-    .key {
-        padding: 10px;
-        border: 1px solid #ccc;
-        cursor: pointer;
-        user-select: none;
-        transition: all 0.1s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .key:active {
-        transform: scale(0.95);
-        background-color: #e0e0e0;
-    }
-
-    .wide-key {
-        grid-column: span 2;
-    }
-
-    @media (max-width: 500px) {
-        .tile {
-            font-size: 1.5em;
-        }
-
-        #keyboard {
-            grid-template-columns: repeat(7, 1fr);
-        }
-    }
-</style>
-
-<script>
-    const words = [
-        "PORTS",
-        "TRADE",
-        "SHIPS",
-        "GLOBAL",
-        "GOODS",
-        "LINKS",
-        "SUPPLY",
-        "CHAIN",
-        "WORLD",
-    ];
-    let currentWord = "";
-    let guessedLetters = [];
-    let remainingGuesses = 6;
-
-    function initGame() {
-        currentWord = words[Math.floor(Math.random() * words.length)];
-        guessedLetters = [];
-        remainingGuesses = 6;
-
-        const gameBoard = document.getElementById("game-board");
-        gameBoard.innerHTML = "";
-
-        for (let i = 0; i < 30; i++) {
-            const tile = document.createElement("div");
-            tile.classList.add("tile");
-            gameBoard.appendChild(tile);
-        }
-
-        const keyboard = document.getElementById("keyboard");
-        keyboard.innerHTML = "";
-
-        const keyboardLayout = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
-
-        keyboardLayout.forEach((row, rowIndex) => {
-            row.split("").forEach((letter) => {
-                const key = document.createElement("div");
-                key.classList.add("key");
-                key.textContent = letter;
-                key.addEventListener("click", () => handleGuess(letter));
-                keyboard.appendChild(key);
-            });
-
-            // Add Delete and Enter buttons after the last row
-            if (rowIndex === 2) {
-                const deleteKey = document.createElement("div");
-                deleteKey.classList.add("key", "wide-key");
-                deleteKey.textContent = "Delete";
-                deleteKey.addEventListener("click", deleteLetter);
-                keyboard.appendChild(deleteKey);
-
-                const enterKey = document.createElement("div");
-                enterKey.classList.add("key", "wide-key");
-                enterKey.textContent = "Enter";
-                enterKey.addEventListener("click", checkGuess);
-                keyboard.appendChild(enterKey);
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Port Wordle</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
             }
-        });
-    }
-
-    function handleGuess(letter) {
-        if (
-            remainingGuesses > 0 &&
-            guessedLetters.length < currentWord.length
-        ) {
-            guessedLetters.push(letter);
-            updateBoard();
-        }
-    }
-
-    function updateBoard() {
-        const tiles = document.querySelectorAll(".tile");
-        const startIndex = (6 - remainingGuesses) * 5;
-
-        for (let i = 0; i < 5; i++) {
-            tiles[startIndex + i].textContent =
-                i < guessedLetters.length ? guessedLetters[i] : "";
-            tiles[startIndex + i].style.backgroundColor =
-                i < guessedLetters.length ? "#e0e0e0" : "";
-        }
-    }
-
-    function checkGuess() {
-        if (guessedLetters.length !== 5) return;
-
-        const guess = guessedLetters.join("");
-        const tiles = document.querySelectorAll(".tile");
-        const startIndex = (6 - remainingGuesses) * 5;
-
-        for (let i = 0; i < currentWord.length; i++) {
-            if (guess[i] === currentWord[i]) {
-                tiles[startIndex + i].style.backgroundColor = "green";
-            } else if (currentWord.includes(guess[i])) {
-                tiles[startIndex + i].style.backgroundColor = "yellow";
-            } else {
-                tiles[startIndex + i].style.backgroundColor = "gray";
+            #wordle-game {
+                max-width: 800px;
+                margin: 0 auto;
+                text-align: center;
+                padding: 20px;
             }
-            tiles[startIndex + i].style.color = "white";
-        }
-
-        if (guess === currentWord) {
-            alert("Congratulations! You guessed the word!");
-        } else {
-            remainingGuesses--;
-            guessedLetters = [];
-
-            if (remainingGuesses === 0) {
-                alert(`Game over! The word was ${currentWord}`);
+            #game-container {
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                gap: 20px;
             }
-        }
-    }
+            #game-board {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 5px;
+                margin-bottom: 20px;
+                width: 330px;
+            }
+            .tile {
+                width: 100%;
+                height: 0;
+                padding-bottom: 100%;
+                border: 2px solid #ccc;
+                font-size: 2em;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-transform: uppercase;
+                transition: all 0.3s ease;
+                position: relative;
+            }
+            .tile span {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+            #keyboard {
+                display: grid;
+                grid-template-columns: repeat(10, 1fr);
+                gap: 5px;
+                width: 300px;
+            }
+            .key {
+                padding: 10px;
+                border: 1px solid #ccc;
+                cursor: pointer;
+                user-select: none;
+                transition: all 0.1s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .key:active {
+                transform: scale(0.95);
+                background-color: #e0e0e0;
+            }
+            .wide-key {
+                grid-column: span 2;
+            }
+            #mobile-input {
+                display: none;
+            }
+            #mobile-input input {
+                width: 100%;
+                padding: 10px;
+                font-size: 1.2em;
+                margin-bottom: 10px;
+                box-sizing: border-box;
+            }
+            #mobile-input button {
+                width: 100%;
+                padding: 12px;
+                font-size: 1em;
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+            #mobile-input button:hover {
+                background-color: #45a049;
+            }
+            @media (max-width: 768px) {
+                #game-container {
+                    flex-direction: column;
+                    align-items: center;
+                }
+                #keyboard {
+                    display: none;
+                }
+                #mobile-input {
+                    display: block;
+                    width: 100%;
+                    max-width: 330px;
+                    padding: 0 20px;
+                    box-sizing: border-box;
+                }
+                #game-board {
+                    width: 100%;
+                    max-width: 330px;
+                }
+                .tile {
+                    font-size: 1.5em;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="wordle-game">
+            <h2>Port Wordle</h2>
+            <div id="game-container">
+                <div id="game-board"></div>
+                <div id="keyboard"></div>
+                <div id="mobile-input">
+                    <input
+                        type="text"
+                        maxlength="5"
+                        placeholder="Enter your guess"
+                    />
+                    <button id="enter-btn">Enter</button>
+                </div>
+            </div>
+        </div>
 
-    function deleteLetter() {
-        if (guessedLetters.length > 0) {
-            guessedLetters.pop();
-            updateBoard();
-        }
-    }
+        <script>
+            const words = [
+                "PORTS",
+                "TRADE",
+                "SHIPS",
+                "GLOBAL",
+                "GOODS",
+                "LINKS",
+                "SUPPLY",
+                "CHAIN",
+                "WORLD",
+            ];
+            let currentWord = "";
+            let guessedLetters = [];
+            let remainingGuesses = 6;
 
-    document.addEventListener("DOMContentLoaded", initGame);
+            function initGame() {
+                currentWord = words[Math.floor(Math.random() * words.length)];
+                guessedLetters = [];
+                remainingGuesses = 6;
 
-    document.addEventListener("keydown", (e) => {
-        if (e.key >= "a" && e.key <= "z") {
-            handleGuess(e.key.toUpperCase());
-        } else if (e.key === "Backspace") {
-            deleteLetter();
-        } else if (e.key === "Enter") {
-            checkGuess();
-        }
-    });
-</script>
+                setupGameBoard();
+                setupKeyboard();
+                setupMobileInput();
+                updateBoardAsync();
+
+                const mobileInput = document.querySelector(
+                    "#mobile-input input",
+                );
+                if (mobileInput) mobileInput.disabled = false;
+                document.addEventListener("keydown", handleKeydown);
+            }
+
+            function setupGameBoard() {
+                const gameBoard = document.getElementById("game-board");
+                gameBoard.innerHTML = "";
+
+                for (let i = 0; i < 30; i++) {
+                    const tile = document.createElement("div");
+                    tile.classList.add("tile");
+                    const span = document.createElement("span");
+                    tile.appendChild(span);
+                    gameBoard.appendChild(tile);
+                }
+            }
+
+            function setupKeyboard() {
+                const keyboard = document.getElementById("keyboard");
+                keyboard.innerHTML = "";
+
+                const keyboardLayout = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+
+                keyboardLayout.forEach((row, rowIndex) => {
+                    row.split("").forEach((letter) => {
+                        const key = document.createElement("div");
+                        key.classList.add("key");
+                        key.textContent = letter;
+                        key.addEventListener("click", () =>
+                            handleGuess(letter),
+                        );
+                        keyboard.appendChild(key);
+                    });
+
+                    if (rowIndex === 2) {
+                        const deleteKey = document.createElement("div");
+                        deleteKey.classList.add("key", "wide-key");
+                        deleteKey.textContent = "Delete";
+                        deleteKey.addEventListener("click", deleteLetter);
+                        keyboard.appendChild(deleteKey);
+
+                        const enterKey = document.createElement("div");
+                        enterKey.classList.add("key", "wide-key");
+                        enterKey.textContent = "Enter";
+                        enterKey.addEventListener("click", checkGuess);
+                        keyboard.appendChild(enterKey);
+                    }
+                });
+            }
+
+            function setupMobileInput() {
+                const mobileInput = document.querySelector(
+                    "#mobile-input input",
+                );
+                const enterBtn = document.getElementById("enter-btn");
+
+                mobileInput.addEventListener("input", (e) => {
+                    updateMobileInput(e.target.value);
+                });
+
+                enterBtn.addEventListener("click", handleMobileEnter);
+                mobileInput.addEventListener("keypress", (e) => {
+                    if (e.key === "Enter") {
+                        handleMobileEnter();
+                    }
+                });
+            }
+
+            function updateMobileInput(inputValue) {
+                const validInput = inputValue
+                    .replace(/[^A-Za-z]/g, "")
+                    .toUpperCase();
+                guessedLetters = validInput.split("").slice(0, 5);
+                updateBoardAsync(true);
+            }
+
+            function handleMobileEnter() {
+                const mobileInput = document.querySelector(
+                    "#mobile-input input",
+                );
+                if (
+                    mobileInput &&
+                    mobileInput.value.length === 5 &&
+                    remainingGuesses > 0
+                ) {
+                    guessedLetters = mobileInput.value.toUpperCase().split("");
+                    checkGuess();
+                    resetGuess();
+                }
+            }
+
+            function handleGuess(letter) {
+                if (
+                    remainingGuesses > 0 &&
+                    guessedLetters.length < currentWord.length
+                ) {
+                    guessedLetters.push(letter);
+                    updateBoardAsync();
+                }
+            }
+
+            function updateBoardAsync(isMobileInput = false) {
+                requestAnimationFrame(() => {
+                    updateBoard(isMobileInput);
+                });
+            }
+
+            function updateBoard(isMobileInput = false) {
+                const tiles = document.querySelectorAll(".tile");
+                const startIndex = (6 - remainingGuesses) * 5;
+
+                for (let i = 0; i < 30; i++) {
+                    const tileSpan = tiles[i].querySelector("span");
+                    if (i < startIndex) {
+                        // Keep existing letters and colors for previous guesses
+                        continue;
+                    } else if (i >= startIndex && i < startIndex + 5) {
+                        // Current guess row
+                        const letterIndex = i - startIndex;
+                        if (isMobileInput) {
+                            tileSpan.textContent =
+                                letterIndex < guessedLetters.length
+                                    ? guessedLetters[letterIndex]
+                                    : "";
+                            tiles[i].style.backgroundColor =
+                                letterIndex < guessedLetters.length
+                                    ? "#e0e0e0"
+                                    : "";
+                        } else {
+                            tileSpan.textContent =
+                                guessedLetters[letterIndex] || "";
+                            tiles[i].style.backgroundColor = guessedLetters[
+                                letterIndex
+                            ]
+                                ? "#e0e0e0"
+                                : "";
+                        }
+                    } else {
+                        // Future guess rows
+                        tileSpan.textContent = "";
+                        tiles[i].style.backgroundColor = "";
+                    }
+                }
+            }
+
+            function checkGuess() {
+                if (guessedLetters.length !== 5) return;
+
+                const guess = guessedLetters.join("");
+                const tiles = document.querySelectorAll(".tile");
+                const startIndex = (6 - remainingGuesses) * 5;
+
+                for (let i = 0; i < currentWord.length; i++) {
+                    const tileIndex = startIndex + i;
+                    if (guess[i] === currentWord[i]) {
+                        tiles[tileIndex].style.backgroundColor = "green";
+                    } else if (currentWord.includes(guess[i])) {
+                        tiles[tileIndex].style.backgroundColor = "yellow";
+                    } else {
+                        tiles[tileIndex].style.backgroundColor = "gray";
+                    }
+                    tiles[tileIndex].style.color = "white";
+                }
+
+                if (guess === currentWord) {
+                    setTimeout(
+                        () => alert("Congratulations! You guessed the word!"),
+                        100,
+                    );
+                    remainingGuesses = 0; // End the game
+                } else {
+                    remainingGuesses--;
+                    if (remainingGuesses === 0) {
+                        setTimeout(
+                            () =>
+                                alert(`Game over! The word was ${currentWord}`),
+                            100,
+                        );
+                    }
+                }
+
+                resetGuess();
+
+                if (remainingGuesses === 0) {
+                    // Disable further input when the game is over
+                    const mobileInput = document.querySelector(
+                        "#mobile-input input",
+                    );
+                    if (mobileInput) mobileInput.disabled = true;
+                    document.removeEventListener("keydown", handleKeydown);
+                }
+            }
+
+            function deleteLetter() {
+                if (guessedLetters.length > 0) {
+                    guessedLetters.pop();
+                    updateBoardAsync();
+                }
+            }
+
+            function handleKeydown(e) {
+                if (e.key >= "a" && e.key <= "z") {
+                    handleGuess(e.key.toUpperCase());
+                } else if (e.key === "Backspace") {
+                    deleteLetter();
+                } else if (e.key === "Enter") {
+                    checkGuess();
+                }
+            }
+
+            function resetGuess() {
+                guessedLetters = [];
+                const mobileInput = document.querySelector(
+                    "#mobile-input input",
+                );
+                if (mobileInput) mobileInput.value = "";
+                updateBoardAsync();
+            }
+
+            document.addEventListener("DOMContentLoaded", initGame);
+            document.addEventListener("keydown", handleKeydown);
+        </script>
+    </body>
+</html>
