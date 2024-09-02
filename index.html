@@ -2,10 +2,6 @@
     <h2>Port Wordle</h2>
     <div id="game-board"></div>
     <div id="keyboard"></div>
-    <div id="controls">
-        <button id="delete-btn">Delete</button>
-        <button id="enter-btn">Enter</button>
-    </div>
 </div>
 
 <style>
@@ -40,7 +36,6 @@
         display: grid;
         grid-template-columns: repeat(10, 1fr);
         gap: 5px;
-        margin-bottom: 20px;
     }
 
     .key {
@@ -49,6 +44,9 @@
         cursor: pointer;
         user-select: none;
         transition: all 0.1s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .key:active {
@@ -56,16 +54,8 @@
         background-color: #e0e0e0;
     }
 
-    #controls {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-    }
-
-    #controls button {
-        padding: 10px 20px;
-        font-size: 1em;
-        cursor: pointer;
+    .wide-key {
+        grid-column: span 2;
     }
 
     @media (max-width: 500px) {
@@ -112,12 +102,31 @@
         const keyboard = document.getElementById("keyboard");
         keyboard.innerHTML = "";
 
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach((letter) => {
-            const key = document.createElement("div");
-            key.classList.add("key");
-            key.textContent = letter;
-            key.addEventListener("click", () => handleGuess(letter));
-            keyboard.appendChild(key);
+        const keyboardLayout = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+
+        keyboardLayout.forEach((row, rowIndex) => {
+            row.split("").forEach((letter) => {
+                const key = document.createElement("div");
+                key.classList.add("key");
+                key.textContent = letter;
+                key.addEventListener("click", () => handleGuess(letter));
+                keyboard.appendChild(key);
+            });
+
+            // Add Delete and Enter buttons after the last row
+            if (rowIndex === 2) {
+                const deleteKey = document.createElement("div");
+                deleteKey.classList.add("key", "wide-key");
+                deleteKey.textContent = "Delete";
+                deleteKey.addEventListener("click", deleteLetter);
+                keyboard.appendChild(deleteKey);
+
+                const enterKey = document.createElement("div");
+                enterKey.classList.add("key", "wide-key");
+                enterKey.textContent = "Enter";
+                enterKey.addEventListener("click", checkGuess);
+                keyboard.appendChild(enterKey);
+            }
         });
     }
 
@@ -179,11 +188,6 @@
             updateBoard();
         }
     }
-
-    document
-        .getElementById("delete-btn")
-        .addEventListener("click", deleteLetter);
-    document.getElementById("enter-btn").addEventListener("click", checkGuess);
 
     document.addEventListener("DOMContentLoaded", initGame);
 
